@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>匹克球 8 人雙打公平輪替工具 (Pickleball Rotator)</title>
+  <style>
+    :root {
+      --primary: #84cc16; /* 匹克球亮萊姆綠 */
+      --primary-dark: #65a30d;
+      --court-blue: #0284c7; /* 匹克球場地藍 */
+      --kitchen-green: #4d7c0f; /* 廚房區 (Kitchen / Non-Volley Zone) */
+      --court-line: #ffffff;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --team-a: #38bdf8;
+      --team-b: #fb7185;
+      --accent: #facc15;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background-color: #0b1120;
+      border-bottom: 1px solid var(--card-border);
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-icon {
+      font-size: 2rem;
+      background: rgba(132, 204, 22, 0.15);
+      border: 1px solid rgba(132, 204, 22, 0.4);
+      padding: 0.3rem 0.5rem;
+      border-radius: 0.5rem;
+    }
+
+    .brand h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #a3e635, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+      background: var(--card-bg);
+      padding: 0.25rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--card-border);
+    }
+
+    .nav-tab {
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      background: transparent;
+      color: var(--text-muted);
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .nav-tab.active {
+      background: var(--primary);
+      color: #0f172a;
+    }
+
+    main {
+      flex: 1;
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    /* Players Setup Grid */
+    .players-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .player-input-wrap {
+      display: flex;
+      align-items: center;
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 0.5rem;
+      padding: 0.4rem 0.6rem;
+      gap: 0.5rem;
+    }
+
+    .player-badge {
+      width: 24px;
+      height: 24px;
+      background: var(--card-border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: #a3e635;
+    }
+
+    .player-input-wrap input {
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 0.95rem;
+      width: 100%;
+      outline: none;
+    }
+
+    /* Button Styles */
+    .btn-group {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.6rem 1.1rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #0f172a;
+    }
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #334155;
+      color: #f1f5f9;
+    }
+    .btn-secondary:hover {
+      background: #475569;
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: #0f172a;
+    }
+    .btn-accent:hover {
+      filter: brightness(1.1);
+    }
+
+    .btn-lg {
+      padding: 0.85rem 1.6rem;
+      font-size: 1.05rem;
+    }
+
+    /* Pickleball Court Visualization */
+    .match-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .round-badge {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #a3e635;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* 經典匹克球場：深藍主場 + 經典廚房區 (Kitchen/NVZ) + 白色劃線 */
+    .court-container {
+      background: var(--court-blue);
+      border: 4px solid #ffffff;
+      border-radius: 0.75rem;
+      padding: 1.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      position: relative;
+      box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.4);
+    }
+
+    .court-zone-title {
+      font-size: 0.7rem;
+      font-weight: bold;
+      letter-spacing: 0.1em;
+      color: rgba(255, 255, 255, 0.7);
+      text-align: center;
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+    }
+
+    .court-team {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      position: relative;
+      z-index: 2;
+      padding: 0.5rem 0;
+    }
+
+    /* 匹克球核心特徵：廚房區 (Non-Volley Zone / Kitchen) */
+    .court-kitchen {
+      background: var(--kitchen-green);
+      border-top: 2px solid #ffffff;
+      border-bottom: 2px solid #ffffff;
+      padding: 0.6rem 0;
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      color: #fef08a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .court-net {
+      width: 100%;
+      height: 26px;
+      border-top: 2px dashed rgba(255, 255, 255, 0.9);
+      border-bottom: 2px dashed rgba(255, 255, 255, 0.9);
+      background: rgba(15, 23, 42, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 0.7rem;
+      font-weight: 900;
+      letter-spacing: 0.25em;
+    }
+
+    .player-card {
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 0.6rem;
+      padding: 0.8rem 1.2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+      min-width: 140px;
+      border: 2px solid transparent;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .player-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .player-card.team-a {
+      border-color: var(--team-a);
+    }
+
+    .player-card.team-b {
+      border-color: var(--team-b);
+    }
+
+    .player-card.bench {
+      border-color: #64748b;
+      min-width: 110px;
+      padding: 0.5rem 0.8rem;
+    }
+
+    .player-card.selected-swap {
+      border-color: #facc15;
+      box-shadow: 0 0 15px #facc15;
+      transform: scale(1.05);
+    }
+
+    .player-role {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .team-a .player-role { color: var(--team-a); }
+    .team-b .player-role { color: var(--team-b); }
+    .bench .player-role { color: #94a3b8; }
+
+    .player-name {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: white;
+    }
+
+    /* Score Controls (匹克球標準 11 分制) */
+    .score-board {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      margin: 1.2rem 0;
+      flex-wrap: wrap;
+    }
+
+    .score-team {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .score-num {
+      font-size: 2.3rem;
+      font-weight: 900;
+      min-width: 50px;
+      text-align: center;
+      color: white;
+      background: #0f172a;
+      padding: 0.2rem 0.75rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--card-border);
+    }
+
+    .score-num.win {
+      color: #a3e635;
+      border-color: #a3e635;
+    }
+
+    .score-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #334155;
+      color: white;
+      border: none;
+      font-size: 1.3rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+
+    .score-btn:hover { background: #475569; }
+
+    /* Bench Section */
+    .bench-container {
+      background: #0b1120;
+      border: 1px solid var(--card-border);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    .bench-title {
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .bench-players {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    /* Match Table */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--card-border);
+      font-size: 0.9rem;
+    }
+
+    th {
+      background: #0b1120;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .team-badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 0.35rem;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .badge-a { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+    .badge-b { background: rgba(251, 113, 133, 0.15); color: #fb7185; border: 1px solid rgba(251, 113, 133, 0.3); }
+    .badge-rest { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
+
+    /* Notice & Tips */
+    .banner {
+      background: rgba(132, 204, 22, 0.1);
+      border: 1px solid rgba(132, 204, 22, 0.3);
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.85rem;
+      color: #bef264;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: #84cc16;
+      color: #0f172a;
+      padding: 0.75rem 1.25rem;
+      border-radius: 0.5rem;
+      font-weight: 700;
+      box-shadow: 0 10px 20px -3px rgba(0, 0, 0, 0.6);
+      display: none;
+      z-index: 100;
+    }
+
+    @media (max-width: 640px) {
+      .court-team {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .player-card {
+        width: 100%;
+        max-width: 260px;
+      }
+      .score-board {
+        gap: 0.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-icon">🏓</div>
+      <div>
+        <h1>匹克球 8 人雙打公平輪替工具</h1>
+        <p>Pickleball Rotator・4人雙打對戰・4人輪替休息・廚房區/11分制支援</p>
+      </div>
+    </div>
+    <nav class="nav-tabs">
+      <button class="nav-tab active" onclick="switchTab('playTab')">🏓 即時對戰</button>
+      <button class="nav-tab" onclick="switchTab('scheduleTab')">📋 14 場完美賽程</button>
+      <button class="nav-tab" onclick="switchTab('statsTab')">📊 個人出賽統計</button>
+      <button class="nav-tab" onclick="switchTab('settingsTab')">⚙️ 球員名單</button>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- Tab 1: 即時對戰現場操作 -->
+    <section id="playTab" class="tab-content active">
+      <div class="card">
+        <div class="match-header">
+          <div class="round-badge">
+            <span>第 <span id="currentRoundText">1</span> 場</span>
+            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;" id="roundModeText">(完美輪替循環)</span>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-secondary" onclick="prevMatch()" id="btnPrevMatch" title="回上一場">⏮️ 上一場</button>
+            <button class="btn btn-secondary" onclick="shufflePlayers()" title="隨機打亂順序">🔀 重新抽籤名單</button>
+            <button class="btn btn-primary btn-lg" onclick="nextMatch()" id="btnNextMatch">下一場 ⏭️</button>
+          </div>
+        </div>
+
+        <div class="banner">
+          💡 <strong>現場操作提示：</strong>匹克球採 11 分制（領先 2 分獲勝）。點擊球場或休息區上的任何球員卡片可任意「手動換人」！
+        </div>
+
+        <!-- 經典匹克球場視圖 (Pickleball Court) -->
+        <div class="court-container">
+          <div class="court-zone-title">TEAM A 底線區 (Baseline Area)</div>
+          <!-- Team A (上方隊伍) -->
+          <div class="court-team">
+            <div class="player-card team-a" id="cardA1" onclick="selectPlayerForSwap('cardA1', 0)">
+              <span class="player-role">Team A (左半場)</span>
+              <span class="player-name" id="nameA1">球員 1</span>
+            </div>
+            <div class="player-card team-a" id="cardA2" onclick="selectPlayerForSwap('cardA2', 1)">
+              <span class="player-role">Team A (右半場)</span>
+              <span class="player-name" id="nameA2">球員 2</span>
+            </div>
+          </div>
+
+          <!-- 匹克球特色：廚房區 (Non-Volley Zone / Kitchen) -->
+          <div class="court-kitchen">
+            <span>NON-VOLLEY ZONE (廚房區 7 FT)</span>
+            <div class="court-net">
+              ━━━ 網高 34 INCH 球網 ━━━
+            </div>
+            <span>NON-VOLLEY ZONE (廚房區 7 FT)</span>
+          </div>
+
+          <!-- Team B (下方隊伍) -->
+          <div class="court-team">
+            <div class="player-card team-b" id="cardB1" onclick="selectPlayerForSwap('cardB1', 2)">
+              <span class="player-role">Team B (左半場)</span>
+              <span class="player-name" id="nameB1">球員 3</span>
+            </div>
+            <div class="player-card team-b" id="cardB2" onclick="selectPlayerForSwap('cardB2', 3)">
+              <span class="player-role">Team B (右半場)</span>
+              <span class="player-name" id="nameB2">球員 4</span>
+            </div>
+          </div>
+          <div class="court-zone-title">TEAM B 底線區 (Baseline Area)</div>
+        </div>
+
+        <!-- 比分記分板 (11分制) -->
+        <div class="score-board">
+          <div class="score-team">
+            <span style="color: var(--team-a); font-weight: bold;">Team A</span>
+            <button class="score-btn" onclick="adjustScore('A', -1)">-</button>
+            <span class="score-num" id="scoreA">0</span>
+            <button class="score-btn" onclick="adjustScore('A', 1)">+</button>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-weight: 900; color: var(--text-muted); font-size: 1.5rem;">VS</div>
+            <div style="font-size: 0.75rem; color: #a3e635; font-weight: 600;">11 分勝出</div>
+          </div>
+          <div class="score-team">
+            <button class="score-btn" onclick="adjustScore('B', 1)">+</button>
+            <span class="score-num" id="scoreB">0</span>
+            <button class="score-btn" onclick="adjustScore('B', -1)">-</button>
+            <span style="color: var(--team-b); font-weight: bold;">Team B</span>
+          </div>
+        </div>
+
+        <!-- 休息區 (Bench) -->
+        <div class="bench-container">
+          <div class="bench-title">
+            <span>🪑 本場休息區（4 人）：</span>
+            <span style="font-size: 0.75rem; color: #94a3b8;">(下一場將優先替換上場)</span>
+          </div>
+          <div class="bench-players">
+            <div class="player-card bench" id="cardR1" onclick="selectPlayerForSwap('cardR1', 4)">
+              <span class="player-role">休息中</span>
+              <span class="player-name" id="nameR1">球員 5</span>
+            </div>
+            <div class="player-card bench" id="cardR2" onclick="selectPlayerForSwap('cardR2', 5)">
+              <span class="player-role">休息中</span>
+              <span class="player-name" id="nameR2">球員 6</span>
+            </div>
+            <div class="player-card bench" id="cardR3" onclick="selectPlayerForSwap('cardR3', 6)">
+              <span class="player-role">休息中</span>
+              <span class="player-name" id="nameR3">球員 7</span>
+            </div>
+            <div class="player-card bench" id="cardR4" onclick="selectPlayerForSwap('cardR4', 7)">
+              <span class="player-role">休息中</span>
+              <span class="player-name" id="nameR4">球員 8</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 2: 完整 14 場賽程表 -->
+    <section id="scheduleTab" class="tab-content">
+      <div class="card">
+        <div class="card-title">
+          <span>📋 匹克球 8 人 14 場完美賽程表</span>
+          <div class="btn-group">
+            <button class="btn btn-secondary" onclick="copyScheduleText()">📋 複製賽程文字 (發 LINE 群)</button>
+            <button class="btn btn-primary" onclick="generateWhistSchedule()">🔄 重新整理賽程</button>
+          </div>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+          數學演算法保證：全循環 14 場，每人精準<strong>上場 7 場、休息 7 場</strong>，且<strong>與其餘 7 位球友每人都剛好搭檔過 1 次</strong>，面對每個對手剛好 2 次！
+        </p>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 80px;">場次</th>
+                <th>隊伍 A (2人)</th>
+                <th style="width: 40px; text-align: center;">VS</th>
+                <th>隊伍 B (2人)</th>
+                <th>休息球員 (4人)</th>
+                <th style="width: 90px; text-align: center;">快速跳轉</th>
+              </tr>
+            </thead>
+            <tbody id="scheduleTableBody">
+              <!-- 動態生成 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 3: 個人出賽數據統計 -->
+    <section id="statsTab" class="tab-content">
+      <div class="card">
+        <div class="card-title">
+          <span>📊 今日出賽與勝率統計</span>
+          <button class="btn btn-secondary" onclick="resetStats()">🔄 重置統計數據</button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>球員姓名</th>
+                <th style="text-align: center;">已上場次數</th>
+                <th style="text-align: center;">休息次數</th>
+                <th style="text-align: center;">勝場數</th>
+                <th style="text-align: center;">勝率</th>
+                <th>搭檔過的隊友記錄</th>
+              </tr>
+            </thead>
+            <tbody id="statsTableBody">
+              <!-- 動態生成 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 4: 8位球員名單設定 -->
+    <section id="settingsTab" class="tab-content">
+      <div class="card">
+        <div class="card-title">
+          <span>⚙️ 8 位球友名單設定</span>
+          <div class="btn-group">
+            <button class="btn btn-secondary" onclick="resetDefaultNames()">恢復預設名單</button>
+            <button class="btn btn-primary" onclick="savePlayerNames()">💾 儲存名單</button>
+          </div>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+          輸入球友姓名或暱稱，名單會自動儲存在手機或電腦瀏覽器中，重新整理或關閉都不會消失！
+        </p>
+
+        <div class="players-grid" id="playersInputContainer">
+          <!-- 8 個輸入框 -->
+        </div>
+
+        <div class="btn-group" style="margin-top: 1rem;">
+          <button class="btn btn-accent" onclick="quickFillNicknames()">✨ 填入範例暱稱 (阿哲、小豪、隊長...)</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="toast" class="toast">賽程文字已成功複製至剪貼簿！</div>
+
+  <script>
+    // --- 狀態管理 ---
+    const DEFAULT_NAMES = ["球員 1", "球員 2", "球員 3", "球員 4", "球員 5", "球員 6", "球員 7", "球員 8"];
+    let playerNames = [...DEFAULT_NAMES];
+
+    // Whist(8) 演算法產生的 14 場標準索引 (0~7)
+    // 7 個 Round，每個 Round 分 Match 1 與 Match 2 (各 4 人)
+    const WHIST_MATCHES = [];
+    function initWhistMatches() {
+      WHIST_MATCHES.length = 0;
+      for (let r = 0; r < 7; r++) {
+        const m = (x) => (x === 7 ? 7 : (x + r) % 7);
+        // Match 1
+        WHIST_MATCHES.push({
+          teamA: [m(7), m(0)],
+          teamB: [m(1), m(3)],
+          rest: [m(2), m(6), m(4), m(5)]
+        });
+        // Match 2
+        WHIST_MATCHES.push({
+          teamA: [m(2), m(6)],
+          teamB: [m(4), m(5)],
+          rest: [m(7), m(0), m(1), m(3)]
+        });
+      }
+    }
+    initWhistMatches();
+
+    let currentMatchIndex = 0;
+    // 當前場次玩家配置 (長度 8: 0,1為TeamA; 2,3為TeamB; 4,5,6,7為休息)
+    let currentMatchPlayers = [0, 1, 2, 3, 4, 5, 6, 7];
+    let scoreA = 0;
+    let scoreB = 0;
+
+    // 換人暫存
+    let swapSelected = null;
+
+    // 出賽統計累積
+    let matchHistory = [];
+
+    // --- 初始化 ---
+    window.addEventListener("DOMContentLoaded", () => {
+      loadSavedNames();
+      renderSettingsInputs();
+      applyMatchByIndex(0);
+      generateWhistSchedule();
+      updateStatsTable();
+    });
+
+    // --- 本地儲存 ---
+    function loadSavedNames() {
+      const saved = localStorage.getItem("pickleball_players_8");
+      if (saved) {
+        try {
+          const arr = JSON.parse(saved);
+          if (Array.isArray(arr) && arr.length === 8) {
+            playerNames = arr;
+          }
+        } catch (e) {}
+      }
+    }
+
+    function savePlayerNames() {
+      const inputs = document.querySelectorAll(".player-name-input");
+      inputs.forEach((inp, idx) => {
+        const val = inp.value.trim();
+        playerNames[idx] = val || `球員 ${idx + 1}`;
+      });
+      localStorage.setItem("pickleball_players_8", JSON.stringify(playerNames));
+      renderCurrentMatch();
+      generateWhistSchedule();
+      updateStatsTable();
+      showToast("球員名單已成功儲存！");
+    }
+
+    function resetDefaultNames() {
+      playerNames = [...DEFAULT_NAMES];
+      renderSettingsInputs();
+      savePlayerNames();
+    }
+
+    function quickFillNicknames() {
+      playerNames = ["隊長", "阿哲", "小豪", "阿強", "小美", "佳佳", "大雄", "冠宇"];
+      renderSettingsInputs();
+      savePlayerNames();
+    }
+
+    function renderSettingsInputs() {
+      const container = document.getElementById("playersInputContainer");
+      container.innerHTML = "";
+      playerNames.forEach((name, idx) => {
+        const wrap = document.createElement("div");
+        wrap.className = "player-input-wrap";
+        wrap.innerHTML = `
+          <div class="player-badge">${idx + 1}</div>
+          <input type="text" class="player-name-input" value="${name}" placeholder="輸入第 ${idx + 1} 位姓名">
+        `;
+        container.appendChild(wrap);
+      });
+    }
+
+    // --- 場次切換與套用 ---
+    function applyMatchByIndex(idx) {
+      if (idx < 0) idx = 0;
+      currentMatchIndex = idx;
+      const m = WHIST_MATCHES[idx % WHIST_MATCHES.length];
+      currentMatchPlayers = [
+        m.teamA[0], m.teamA[1],
+        m.teamB[0], m.teamB[1],
+        m.rest[0], m.rest[1], m.rest[2], m.rest[3]
+      ];
+      scoreA = 0;
+      scoreB = 0;
+      document.getElementById("scoreA").textContent = "0";
+      document.getElementById("scoreB").textContent = "0";
+      document.getElementById("scoreA").classList.remove("win");
+      document.getElementById("scoreB").classList.remove("win");
+      renderCurrentMatch();
+    }
+
+    function renderCurrentMatch() {
+      document.getElementById("currentRoundText").textContent = (currentMatchIndex + 1);
+      
+      document.getElementById("nameA1").textContent = playerNames[currentMatchPlayers[0]];
+      document.getElementById("nameA2").textContent = playerNames[currentMatchPlayers[1]];
+      document.getElementById("nameB1").textContent = playerNames[currentMatchPlayers[2]];
+      document.getElementById("nameB2").textContent = playerNames[currentMatchPlayers[3]];
+
+      document.getElementById("nameR1").textContent = playerNames[currentMatchPlayers[4]];
+      document.getElementById("nameR2").textContent = playerNames[currentMatchPlayers[5]];
+      document.getElementById("nameR3").textContent = playerNames[currentMatchPlayers[6]];
+      document.getElementById("nameR4").textContent = playerNames[currentMatchPlayers[7]];
+
+      clearSwapSelection();
+    }
+
+    function nextMatch() {
+      recordMatchResult();
+      currentMatchIndex++;
+      applyMatchByIndex(currentMatchIndex);
+      updateStatsTable();
+    }
+
+    function prevMatch() {
+      if (currentMatchIndex > 0) {
+        currentMatchIndex--;
+        applyMatchByIndex(currentMatchIndex);
+      }
+    }
+
+    function shufflePlayers() {
+      for (let i = playerNames.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [playerNames[i], playerNames[j]] = [playerNames[j], playerNames[i]];
+      }
+      renderSettingsInputs();
+      localStorage.setItem("pickleball_players_8", JSON.stringify(playerNames));
+      renderCurrentMatch();
+      generateWhistSchedule();
+      updateStatsTable();
+      showToast("已隨機打亂球員代號！");
+    }
+
+    // --- 手動互換球員位置 ---
+    function selectPlayerForSwap(cardId, slotIndex) {
+      const card = document.getElementById(cardId);
+      if (!swapSelected) {
+        swapSelected = { cardId, slotIndex };
+        card.classList.add("selected-swap");
+        showToast(`已選取 ${playerNames[currentMatchPlayers[slotIndex]]}，請點擊另一位球員對調`);
+      } else {
+        if (swapSelected.cardId === cardId) {
+          clearSwapSelection();
+          return;
+        }
+        const idx1 = swapSelected.slotIndex;
+        const idx2 = slotIndex;
+        const temp = currentMatchPlayers[idx1];
+        currentMatchPlayers[idx1] = currentMatchPlayers[idx2];
+        currentMatchPlayers[idx2] = temp;
+
+        clearSwapSelection();
+        renderCurrentMatch();
+        showToast("已手動對調球員位置！");
+      }
+    }
+
+    function clearSwapSelection() {
+      if (swapSelected) {
+        const el = document.getElementById(swapSelected.cardId);
+        if (el) el.classList.remove("selected-swap");
+        swapSelected = null;
+      }
+    }
+
+    // --- 比分控制 ---
+    function adjustScore(team, delta) {
+      if (team === 'A') {
+        scoreA = Math.max(0, scoreA + delta);
+        const el = document.getElementById("scoreA");
+        el.textContent = scoreA;
+        if (scoreA >= 11 && scoreA - scoreB >= 2) {
+          el.classList.add("win");
+        } else {
+          el.classList.remove("win");
+        }
+      } else {
+        scoreB = Math.max(0, scoreB + delta);
+        const el = document.getElementById("scoreB");
+        el.textContent = scoreB;
+        if (scoreB >= 11 && scoreB - scoreA >= 2) {
+          el.classList.add("win");
+        } else {
+          el.classList.remove("win");
+        }
+      }
+    }
+
+    function recordMatchResult() {
+      const matchData = {
+        round: currentMatchIndex + 1,
+        teamA: [currentMatchPlayers[0], currentMatchPlayers[1]],
+        teamB: [currentMatchPlayers[2], currentMatchPlayers[3]],
+        rest: [currentMatchPlayers[4], currentMatchPlayers[5], currentMatchPlayers[6], currentMatchPlayers[7]],
+        scoreA,
+        scoreB
+      };
+      matchHistory.push(matchData);
+    }
+
+    // --- 賽程表渲染 ---
+    function generateWhistSchedule() {
+      const tbody = document.getElementById("scheduleTableBody");
+      tbody.innerHTML = "";
+
+      WHIST_MATCHES.forEach((m, idx) => {
+        const tr = document.createElement("tr");
+        
+        const a1 = playerNames[m.teamA[0]];
+        const a2 = playerNames[m.teamA[1]];
+        const b1 = playerNames[m.teamB[0]];
+        const b2 = playerNames[m.teamB[1]];
+        const rests = m.rest.map(r => playerNames[r]).join("、");
+
+        tr.innerHTML = `
+          <td><strong>第 ${idx + 1} 場</strong></td>
+          <td><span class="team-badge badge-a">${a1} + ${a2}</span></td>
+          <td style="text-align: center; font-weight: bold; color: var(--text-muted);">vs</td>
+          <td><span class="team-badge badge-b">${b1} + ${b2}</span></td>
+          <td><span class="team-badge badge-rest">${rests}</span></td>
+          <td style="text-align: center;">
+            <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="jumpToMatch(${idx})">跳至本場</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function jumpToMatch(idx) {
+      applyMatchByIndex(idx);
+      switchTab('playTab');
+      showToast(`已跳轉至第 ${idx + 1} 場！`);
+    }
+
+    function copyScheduleText() {
+      let text = "🏓 匹克球 8 人雙打 14 場完美輪替賽程表 🏓\n";
+      text += "--------------------------------------\n";
+      WHIST_MATCHES.forEach((m, idx) => {
+        const a = `${playerNames[m.teamA[0]]}+${playerNames[m.teamA[1]]}`;
+        const b = `${playerNames[m.teamB[0]]}+${playerNames[m.teamB[1]]}`;
+        const rest = m.rest.map(r => playerNames[r]).join(", ");
+        text += `【第 ${idx + 1} 場】 ${a} VS ${b} (休: ${rest})\n`;
+      });
+      text += "--------------------------------------\n";
+      text += "特色：14場每人各打7場、休息7場，與全員皆搭檔1次！";
+
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("賽程已複製！可直接貼上至 LINE 群組！");
+      }).catch(() => {
+        showToast("複製成功！");
+      });
+    }
+
+    // --- 統計更新 ---
+    function updateStatsTable() {
+      const tbody = document.getElementById("statsTableBody");
+      tbody.innerHTML = "";
+
+      const playedCount = Array(8).fill(0);
+      const restCount = Array(8).fill(0);
+      const winCount = Array(8).fill(0);
+      const partners = Array.from({length: 8}, () => new Set());
+
+      matchHistory.forEach(m => {
+        m.teamA.forEach(p => {
+          playedCount[p]++;
+          partners[p].add(m.teamA.find(x => x !== p));
+          if (m.scoreA > m.scoreB) winCount[p]++;
+        });
+        m.teamB.forEach(p => {
+          playedCount[p]++;
+          partners[p].add(m.teamB.find(x => x !== p));
+          if (m.scoreB > m.scoreA) winCount[p]++;
+        });
+        m.rest.forEach(p => restCount[p]++);
+      });
+
+      playerNames.forEach((name, idx) => {
+        const played = playedCount[idx];
+        const rested = restCount[idx];
+        const wins = winCount[idx];
+        const winRate = played > 0 ? ((wins / played) * 100).toFixed(0) + "%" : "-";
+        
+        const partnerNames = Array.from(partners[idx]).map(pIdx => playerNames[pIdx]).join("、") || "尚未開打";
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><strong>${name}</strong></td>
+          <td style="text-align: center; color: #a3e635; font-weight: bold;">${played}</td>
+          <td style="text-align: center; color: var(--text-muted);">${rested}</td>
+          <td style="text-align: center; color: #38bdf8;">${wins}</td>
+          <td style="text-align: center;">${winRate}</td>
+          <td style="font-size: 0.8rem; color: #94a3b8;">${partnerNames}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function resetStats() {
+      if (confirm("確定要重置今天的出賽統計與勝負紀錄嗎？")) {
+        matchHistory = [];
+        updateStatsTable();
+        showToast("統計數據已重置！");
+      }
+    }
+
+    // --- Tab 切換 ---
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
+      document.querySelectorAll(".nav-tab").forEach(el => el.classList.remove("active"));
+      
+      const tabEl = document.getElementById(tabId);
+      if (tabEl) tabEl.classList.add("active");
+
+      const btns = document.querySelectorAll(".nav-tab");
+      if (tabId === 'playTab') btns[0].classList.add("active");
+      if (tabId === 'scheduleTab') btns[1].classList.add("active");
+      if (tabId === 'statsTab') btns[2].classList.add("active");
+      if (tabId === 'settingsTab') btns[3].classList.add("active");
+    }
+
+    // --- Toast 提示 ---
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.style.display = "block";
+      setTimeout(() => {
+        toast.style.display = "none";
+      }, 2500);
+    }
+  </script>
+</body>
+</html>
